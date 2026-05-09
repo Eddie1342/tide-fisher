@@ -451,6 +451,11 @@ body { padding-top: var(--safe-top); padding-bottom: var(--safe-bot); }
     <button onclick="switchTab('planner')" style="background:none;border:none;color:var(--accent);font-size:14px;cursor:pointer;padding:0;font-family:'DM Sans',sans-serif">‹ Back</button>
     <span>📖 My Journal</span>
   </div>
+  <div style="margin:0 16px 16px;background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;padding:14px">
+    <div style="font-size:12px;color:var(--text2);margin-bottom:10px">🔔 Notifications — allow so the app can alert you when good conditions match your journal</div>
+    <button onclick="testNotification()" style="width:100%;background:var(--bg);border:0.5px solid var(--border);border-radius:8px;color:var(--text);padding:10px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif">Send test notification</button>
+    <div id="notifStatus" style="font-size:11px;color:var(--text2);margin-top:8px;text-align:center"></div>
+  </div>
   <div id="journalList"></div>
 </div>
 
@@ -1681,6 +1686,37 @@ function openDetail(id){
 function closeDetail(){
   document.getElementById('detailModal').classList.remove('show');
   editingId=null;
+}
+
+async function testNotification(){
+  const status=document.getElementById('notifStatus');
+  if(!('Notification' in window)){
+    status.textContent='❌ Notifications not supported on this browser/device.';
+    return;
+  }
+  status.textContent='Requesting permission…';
+  const perm=await Notification.requestPermission();
+  if(perm==='denied'){
+    status.textContent='❌ Permission denied. Enable notifications for this site in Settings → Safari → [this site] → Notifications.';
+    return;
+  }
+  if(perm!=='granted'){
+    status.textContent='❌ Permission not granted.';
+    return;
+  }
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    await reg.showNotification('Tide Fisher 🎣',{
+      body:'Conditions at your flagged mark are looking good this weekend!',
+      icon:'/tide-fisher/icon-192.png',
+      badge:'/tide-fisher/icon-192.png',
+    });
+    status.textContent='✅ Notification sent — check your notification tray!';
+  }catch(e){
+    // Fallback if SW showNotification fails (some browsers)
+    new Notification('Tide Fisher 🎣',{body:'Test notification — working!'});
+    status.textContent='✅ Notification sent!';
+  }
 }
 
 function deleteEntry(){
