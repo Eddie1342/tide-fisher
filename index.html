@@ -75,7 +75,7 @@ body { padding-top: var(--safe-top); padding-bottom: var(--safe-bot); }
 #portSearch {
   width: 100%; font-size: 14px; font-family: 'DM Sans', sans-serif;
   background: var(--bg2); color: var(--text); border: 0.5px solid var(--border);
-  border-radius: 10px; padding: 9px 36px 9px 12px; outline: none;
+  border-radius: 10px; padding: 9px 64px 9px 12px; outline: none;
 }
 #portSearch::placeholder { color: var(--text3); }
 #searchClear {
@@ -100,6 +100,12 @@ body { padding-top: var(--safe-top); padding-bottom: var(--safe-bot); }
 .sug-item:last-child { border-bottom: none; }
 .sug-item:active, .sug-item:hover { background: rgba(59,138,220,0.15); }
 .sug-dist { font-size: 11px; color: var(--text3); }
+.sug-hdr { padding: 8px 14px 4px; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); }
+#favStar {
+  position: absolute; right: 36px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: var(--accent); font-size: 20px;
+  cursor: pointer; padding: 2px 4px; display: none; line-height: 1;
+}
 .api-setup {
   margin-top: 8px; display: flex; align-items: center; gap: 8px;
   font-size: 11px; color: var(--text3);
@@ -376,6 +382,7 @@ body { padding-top: var(--safe-top); padding-bottom: var(--safe-bot); }
              oninput="onSearchInput(this.value)"
              onfocus="onSearchFocus()"
              onblur="onSearchBlur()">
+      <button id="favStar" onclick="toggleFavourite()" aria-label="Favourite"></button>
       <button id="searchClear" onclick="clearSearch()" aria-label="Clear">✕</button>
       <div id="portSuggestions" class="suggestions"></div>
     </div>
@@ -1230,10 +1237,80 @@ async function initSearch(){
   }
 }
 
+// ── Recents & Favourites ──────────────────────────────────────────────────
+function getRecents(){ try{return JSON.parse(localStorage.getItem('tf_recents'))||[];}catch(_){return [];} }
+function getFavourites(){ try{return JSON.parse(localStorage.getItem('tf_favs'))||[];}catch(_){return [];} }
+
+function saveRecent(s){
+  let r=getRecents().filter(x=>x.name!==s.name);
+  r.unshift({name:s.name,lat:s.lat,lon:s.lon});
+  try{localStorage.setItem('tf_recents',JSON.stringify(r.slice(0,6)));}catch(_){}
+}
+
+function isFavourite(s){ return s&&getFavourites().some(x=>x.name===s.name); }
+
+function toggleFavourite(){
+  if(!selectedStation) return;
+  let favs=getFavourites();
+  const idx=favs.findIndex(x=>x.name===selectedStation.name);
+  if(idx>=0) favs.splice(idx,1);
+  else favs.unshift({name:selectedStation.name,lat:selectedStation.lat,lon:selectedStation.lon});
+  try{localStorage.setItem('tf_favs',JSON.stringify(favs));}catch(_){}
+  updateFavStar();
+}
+
+function updateFavStar(){
+  const btn=document.getElementById('favStar');
+  if(!btn) return;
+  if(!selectedStation){ btn.style.display='none'; return; }
+  btn.style.display='block';
+  btn.textContent=isFavourite(selectedStation)?'★':'☆';
+}
+
+function renderSearchHome(){
+  const el=document.getElementById('portSuggestions');
+  const favs=getFavourites();
+  const recents=getRecents();
+  if(!favs.length&&!recents.length){ el.classList.remove('show'); return; }
+  let html='';
+  if(favs.length){
+    html+=`<div class="sug-hdr">Favourites</div>`;
+    html+=favs.map(s=>{
+      const d=userLat!=null?` <span class="sug-dist">${Math.round(haversine(userLat,userLon,s.lat,s.lon))} km</span>`:'';
+      return `<div class="sug-item" onmousedown="selectSaved('fav','${encodeURIComponent(s.name)}')">★ ${s.name}${d}</div>`;
+    }).join('');
+  }
+  if(recents.length){
+    html+=`<div class="sug-hdr">Recent</div>`;
+    html+=recents.map(s=>{
+      const d=userLat!=null?` <span class="sug-dist">${Math.round(haversine(userLat,userLon,s.lat,s.lon))} km</span>`:'';
+      return `<div class="sug-item" onmousedown="selectSaved('rec','${encodeURIComponent(s.name)}')">⏱ ${s.name}${d}</div>`;
+    }).join('');
+  }
+  el.innerHTML=html;
+  el.classList.add('show');
+}
+
+function selectSaved(type, encodedName){
+  const name=decodeURIComponent(encodedName);
+  const list=type==='fav'?getFavourites():getRecents();
+  const saved=list.find(x=>x.name===name);
+  if(!saved) return;
+  const full=allStations.find(x=>x.name===saved.name)||saved;
+  selectedStation=full;
+  document.getElementById('portSearch').value=full.name;
+  document.getElementById('searchClear').style.display='block';
+  document.getElementById('headerSub').textContent=full.name;
+  hideSuggestions();
+  saveRecent(full);
+  updateFavStar();
+  updateAll().catch(e=>console.error('Update failed:',e));
+}
+
 function onSearchInput(val){
   const clr=document.getElementById('searchClear');
   clr.style.display=val?'block':'none';
-  if(!val||val.length<2){ hideSuggestions(); return; }
+  if(!val||val.length<2){ renderSearchHome(); return; }
   const q=val.toLowerCase().trim();
   searchResults=allStations.filter(s=>s.name&&s.name.toLowerCase().includes(q)).slice(0,60);
   renderSuggestions(searchResults);
@@ -1242,6 +1319,7 @@ function onSearchInput(val){
 function onSearchFocus(){
   const val=document.getElementById('portSearch').value;
   if(val&&val.length>=2) onSearchInput(val);
+  else renderSearchHome();
 }
 
 function onSearchBlur(){
@@ -1271,6 +1349,8 @@ function selectStation(idx){
   document.getElementById('searchClear').style.display='block';
   document.getElementById('headerSub').textContent=s.name;
   hideSuggestions();
+  saveRecent(s);
+  updateFavStar();
   updateAll().catch(e=>console.error('Update failed:',e));
 }
 
@@ -1280,6 +1360,7 @@ function clearSearch(){
   document.getElementById('searchClear').style.display='none';
   document.getElementById('headerSub').textContent='Shore fishing planner';
   hideSuggestions();
+  updateFavStar();
   document.getElementById('mainContent').style.display='none';
   document.getElementById('emptyState').style.display='block';
 }
