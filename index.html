@@ -1235,7 +1235,7 @@ function onSearchInput(val){
   clr.style.display=val?'block':'none';
   if(!val||val.length<2){ hideSuggestions(); return; }
   const q=val.toLowerCase().trim();
-  searchResults=allStations.filter(s=>s.name&&s.name.toLowerCase().includes(q)).slice(0,15);
+  searchResults=allStations.filter(s=>s.name&&s.name.toLowerCase().includes(q)).slice(0,60);
   renderSuggestions(searchResults);
 }
 
