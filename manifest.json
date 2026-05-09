@@ -2,24 +2,24 @@
   "name": "Tide Fisher",
   "short_name": "Tide Fisher",
   "description": "UK shore fishing tide planner",
-  "start_url": "./index.html",
-  "scope": "./",
+  "start_url": "/tide-fisher/",
+  "scope": "/tide-fisher/",
   "display": "standalone",
   "background_color": "#0a1628",
   "theme_color": "#0a1628",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "/tide-fisher/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "/tide-fisher/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }
