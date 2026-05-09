@@ -447,7 +447,10 @@ body { padding-top: var(--safe-top); padding-bottom: var(--safe-bot); }
 
 <!-- Journal panel -->
 <div id="journalPanel">
-  <div class="j-header">📖 My Journal</div>
+  <div class="j-header" style="display:flex;align-items:center;gap:10px">
+    <button onclick="switchTab('planner')" style="background:none;border:none;color:var(--accent);font-size:14px;cursor:pointer;padding:0;font-family:'DM Sans',sans-serif">‹ Back</button>
+    <span>📖 My Journal</span>
+  </div>
   <div id="journalList"></div>
 </div>
 
@@ -509,11 +512,9 @@ body { padding-top: var(--safe-top); padding-bottom: var(--safe-bot); }
 <!-- Entry detail modal -->
 <div class="detail-modal" id="detailModal">
   <div class="detail-hdr">
+    <button onclick="closeDetail()" style="background:none;border:none;color:var(--accent);font-size:14px;cursor:pointer;padding:0;font-family:'DM Sans',sans-serif">‹ Back</button>
     <span class="detail-ttl" id="detailTitle">—</span>
-    <div style="display:flex;gap:10px;align-items:center">
-      <button class="detail-del" onclick="deleteEntry()">Delete</button>
-      <button onclick="closeDetail()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer">✕</button>
-    </div>
+    <button class="detail-del" onclick="deleteEntry()">Delete</button>
   </div>
   <div class="detail-body" id="detailBody"></div>
 </div>
