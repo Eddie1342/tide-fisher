@@ -481,6 +481,10 @@ body { padding-top: var(--safe-top); padding-bottom: var(--safe-bot); }
       </div>
     </div>
     <div class="log-field">
+      <span class="log-lbl">Specific mark / spot</span>
+      <input class="log-input" id="logMark" placeholder="e.g. South Pier, Black Rocks, The Point..." />
+    </div>
+    <div class="log-field">
       <span class="log-lbl">What did you catch?</span>
       <input class="log-input" id="logCatch" placeholder="e.g. 3 mackerel, 1 pollock..." />
     </div>
@@ -1570,6 +1574,7 @@ function openLogModal(){
   if(!currentConditions) return;
   journalStar=0;
   document.querySelectorAll('.star-btn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('logMark').value='';
   document.getElementById('logCatch').value='';
   document.getElementById('logNotes').value='';
   document.getElementById('logFlag').checked=false;
@@ -1604,6 +1609,7 @@ function saveJournalEntry(){
     id:Date.now(),
     ...journalSnapshot,
     rating:journalStar,
+    mark:document.getElementById('logMark').value.trim(),
     caught:document.getElementById('logCatch').value.trim(),
     notes:document.getElementById('logNotes').value.trim(),
     flagged:document.getElementById('logFlag').checked,
@@ -1629,7 +1635,7 @@ function renderJournal(){
     const flag=e.flagged?'<span style="color:#f5c542">🚩 Flagged</span> · ':'';
     return `<div class="j-entry${e.flagged?' flagged':''}" onclick="openDetail(${e.id})">
       <div class="je-top">
-        <div><div class="je-loc">${e.location}${e.flagged?' 🚩':''}</div><div class="je-date">${new Date(e.date+'T12:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'long',year:'numeric'})}</div></div>
+        <div><div class="je-loc">${e.location}${e.mark?' · '+e.mark:''}${e.flagged?' 🚩':''}</div><div class="je-date">${new Date(e.date+'T12:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'long',year:'numeric'})}</div></div>
         <div class="je-stars">${stars}</div>
       </div>
       <div class="je-conds">🌊 Coefficient ${e.coeff} · 🌙 ${e.moonPhase}</div>
@@ -1644,13 +1650,14 @@ function openDetail(id){
   const e=entries.find(x=>x.id===id);
   if(!e) return;
   editingId=id;
-  document.getElementById('detailTitle').textContent=e.location+' · '+'⭐'.repeat(e.rating);
+  document.getElementById('detailTitle').textContent=(e.mark?e.mark+', ':'')+e.location+' · '+'⭐'.repeat(e.rating);
   const dateStr=new Date(e.date+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   document.getElementById('detailBody').innerHTML=`
     <div class="detail-sec">
       <div class="detail-sec-lbl">Date</div>
       <div style="font-size:14px">${dateStr}${e.flagged?' <span style="color:#f5c542">🚩 Flagged as good session</span>':''}</div>
     </div>
+    ${e.mark?`<div class="detail-sec"><div class="detail-sec-lbl">Fishing mark</div><div style="font-size:14px">📍 ${e.mark}</div></div>`:''}
     ${e.caught?`<div class="detail-sec"><div class="detail-sec-lbl">Catch</div><div style="font-size:14px">🐟 ${e.caught}</div></div>`:''}
     ${e.notes?`<div class="detail-sec"><div class="detail-sec-lbl">Notes</div><div style="font-size:14px;line-height:1.6">${e.notes}</div></div>`:''}
     <div class="detail-sec">
