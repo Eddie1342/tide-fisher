@@ -202,6 +202,52 @@ body { padding-top: var(--safe-top); padding-bottom: var(--safe-bot); }
   color: #5a8fc2;
 }
 
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:0.5px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);}
+.bottom-nav button{flex:1;background:none;border:none;color:var(--text2);padding:10px 0 8px;font-size:10px;font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;transition:color 0.2s;}
+.bottom-nav button.active{color:var(--accent);}
+.bottom-nav button svg{width:22px;height:22px;}
+/* LOG SESSION BUTTON */
+.log-btn{display:block;width:calc(100% - 32px);margin:16px auto;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.log-btn:disabled{opacity:0.4;cursor:default;}
+/* LOG MODAL */
+.log-modal{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.75);align-items:flex-end;}
+.log-modal.show{display:flex;}
+.log-inner{background:var(--bg2);border-radius:20px 20px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding:20px 16px 40px;}
+.log-title{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;}
+.log-field{margin-bottom:14px;}
+.log-lbl{font-size:11px;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.05em;display:block;}
+.log-input,.log-ta{width:100%;background:var(--bg);border:0.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px 12px;box-sizing:border-box;outline:none;}
+.log-ta{min-height:80px;resize:none;}
+.star-row{display:flex;gap:4px;}
+.star-btn{background:none;border:none;font-size:30px;cursor:pointer;padding:0;line-height:1;opacity:0.3;transition:opacity 0.1s;}
+.star-btn.on{opacity:1;}
+.flag-row{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text);}
+.flag-row input{width:18px;height:18px;accent-color:#f5c542;}
+.log-conds{background:var(--bg);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--text2);line-height:1.9;}
+.log-save{width:100%;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:16px;}
+/* JOURNAL PANEL */
+#journalPanel{display:none;padding-bottom:16px;}
+#journalPanel.active{display:block;}
+.j-header{padding:16px 16px 8px;font-family:'Space Mono',monospace;font-size:13px;font-weight:700;}
+.j-empty{text-align:center;padding:60px 32px;color:var(--text2);font-size:13px;line-height:1.8;}
+.j-entry{margin:0 16px 10px;background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;}
+.j-entry.flagged{border-color:rgba(245,197,66,0.45);}
+.je-top{padding:12px 14px 6px;display:flex;justify-content:space-between;align-items:flex-start;}
+.je-loc{font-size:13px;font-weight:600;color:var(--text);}
+.je-date{font-size:11px;color:var(--text2);margin-top:1px;}
+.je-stars{font-size:12px;}
+.je-conds{padding:0 14px 8px;font-size:11px;color:var(--text2);line-height:1.8;}
+.je-note{padding:8px 14px 12px;font-size:12px;color:var(--text);border-top:0.5px solid var(--border);line-height:1.5;}
+/* DETAIL MODAL */
+.detail-modal{display:none;position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;}
+.detail-modal.show{display:block;}
+.detail-hdr{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:0.5px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:1;}
+.detail-ttl{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;}
+.detail-body{padding:16px;}
+.detail-sec{margin-bottom:20px;}
+.detail-sec-lbl{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;}
+.detail-del{color:#e05252;background:none;border:1px solid #e05252;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;}
 /* TIDE CURVE */
 .tide-curve { width: 100%; height: 90px; margin: 4px 0 10px; }
 .tide-pills { display: flex; gap: 7px; flex-wrap: wrap; }
@@ -288,7 +334,7 @@ body { padding-top: var(--safe-top); padding-bottom: var(--safe-bot); }
 </head>
 <body>
 
-<div id="app">
+<div id="app" style="padding-bottom:64px">
 
   <div id="installBanner">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v13M5 9l7 7 7-7"/><path d="M5 22h14"/></svg>
@@ -394,7 +440,78 @@ body { padding-top: var(--safe-top); padding-bottom: var(--safe-bot); }
 
     <p class="note">Solunar &amp; tidal harmonics · Sunrise/set computed from coordinates<br>Always check Met Office for weather before heading out</p>
 
+    <button class="log-btn" id="logBtn" onclick="openLogModal()" disabled>📓 Log this session</button>
+
   </div>
+</div>
+
+<!-- Journal panel -->
+<div id="journalPanel">
+  <div class="j-header">📖 My Journal</div>
+  <div id="journalList"></div>
+</div>
+
+<!-- Bottom nav -->
+<nav class="bottom-nav">
+  <button id="navPlanner" class="active" onclick="switchTab('planner')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Planner
+  </button>
+  <button id="navJournal" onclick="switchTab('journal')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+    Journal
+  </button>
+</nav>
+
+<!-- Log session modal -->
+<div class="log-modal" id="logModal">
+  <div class="log-inner">
+    <div class="log-title">
+      Log Session
+      <button onclick="closeLogModal()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer">✕</button>
+    </div>
+    <div class="log-field">
+      <span class="log-lbl">Your rating</span>
+      <div class="star-row" id="starRow">
+        <button class="star-btn" data-v="1" onclick="setStar(1)">⭐</button>
+        <button class="star-btn" data-v="2" onclick="setStar(2)">⭐</button>
+        <button class="star-btn" data-v="3" onclick="setStar(3)">⭐</button>
+        <button class="star-btn" data-v="4" onclick="setStar(4)">⭐</button>
+        <button class="star-btn" data-v="5" onclick="setStar(5)">⭐</button>
+      </div>
+    </div>
+    <div class="log-field">
+      <span class="log-lbl">What did you catch?</span>
+      <input class="log-input" id="logCatch" placeholder="e.g. 3 mackerel, 1 pollock..." />
+    </div>
+    <div class="log-field">
+      <span class="log-lbl">Notes</span>
+      <textarea class="log-ta" id="logNotes" placeholder="Bait used, marks fished, anything worth remembering..."></textarea>
+    </div>
+    <div class="log-field">
+      <div class="flag-row">
+        <input type="checkbox" id="logFlag" />
+        <label for="logFlag">🚩 Flag as a good session (used to match future conditions)</label>
+      </div>
+    </div>
+    <div class="log-field">
+      <span class="log-lbl">Conditions logged</span>
+      <div class="log-conds" id="logCondsSummary">—</div>
+    </div>
+    <button class="log-save" onclick="saveJournalEntry()">Save Entry</button>
+  </div>
+</div>
+
+<!-- Entry detail modal -->
+<div class="detail-modal" id="detailModal">
+  <div class="detail-hdr">
+    <span class="detail-ttl" id="detailTitle">—</span>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button class="detail-del" onclick="deleteEntry()">Delete</button>
+      <button onclick="closeDetail()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer">✕</button>
+    </div>
+  </div>
+  <div class="detail-body" id="detailBody"></div>
 </div>
 
 <script>
@@ -1177,6 +1294,7 @@ async function updateAll(){
   document.getElementById('datePicker').value=currentDate.toISOString().split('T')[0];
   buildWeekStrip();
   document.getElementById('emptyState').style.display='none';
+  document.getElementById('logBtn').disabled=false;
   document.getElementById('mainContent').style.display='block';
 
   const lat=selectedStation.lat, lng=selectedStation.lon;
@@ -1398,6 +1516,152 @@ async function updateAll(){
 const st=document.createElement('style');
 st.textContent='@keyframes spin{to{transform:rotate(360deg)}}';
 document.head.appendChild(st);
+
+// ── Journal ────────────────────────────────────────────────────────────────────
+let journalStar=0;
+let journalSnapshot=null; // conditions captured when modal opens
+let editingId=null;       // for delete
+
+function switchTab(tab){
+  const isJournal=tab==='journal';
+  document.getElementById('app').style.display=isJournal?'none':'block';
+  document.getElementById('journalPanel').classList.toggle('active',isJournal);
+  document.getElementById('navPlanner').classList.toggle('active',!isJournal);
+  document.getElementById('navJournal').classList.toggle('active',isJournal);
+  if(isJournal) renderJournal();
+}
+
+function loadJournal(){
+  try{ return JSON.parse(localStorage.getItem('tf_journal')||'[]'); }catch{ return []; }
+}
+function saveJournal(entries){
+  localStorage.setItem('tf_journal',JSON.stringify(entries));
+}
+
+function setStar(n){
+  journalStar=n;
+  document.querySelectorAll('.star-btn').forEach(b=>b.classList.toggle('on',+b.dataset.v<=n));
+}
+
+function openLogModal(){
+  if(!selectedStation) return;
+  journalStar=0;
+  document.querySelectorAll('.star-btn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('logCatch').value='';
+  document.getElementById('logNotes').value='';
+  document.getElementById('logFlag').checked=false;
+
+  // Snapshot current conditions
+  const dateStr=currentDate.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+  const coeff=Math.round(20+lunarData(currentDate).sp*100);
+  const lunar=lunarData(currentDate);
+  journalSnapshot={
+    date:currentDate.toISOString().split('T')[0],
+    location:selectedStation.name,
+    lat:selectedStation.lat,
+    lon:selectedStation.lon,
+    coeff,
+    moonPhase:lunar.phase,
+    moonSp:+lunar.sp.toFixed(2),
+  };
+
+  // Build conditions summary text
+  let conds=`📍 ${selectedStation.name} · ${dateStr}\n`;
+  conds+=`🌊 Tidal coefficient: ${coeff}\n`;
+  conds+=`🌙 ${lunar.phase}\n`;
+  const ap=document.getElementById('rOverallV').textContent;
+  if(ap&&ap!=='—') conds+=`⭐ App score: ${ap}\n`;
+  const wx=document.getElementById('wxGrid').textContent.trim();
+  if(wx) conds+=`🌤 Weather on file`;
+
+  document.getElementById('logCondsSummary').textContent=conds;
+  document.getElementById('logModal').classList.add('show');
+}
+
+function closeLogModal(){
+  document.getElementById('logModal').classList.remove('show');
+}
+
+function saveJournalEntry(){
+  if(!journalStar){ alert('Please add a star rating before saving.'); return; }
+  const entries=loadJournal();
+  const entry={
+    id:Date.now(),
+    ...journalSnapshot,
+    rating:journalStar,
+    caught:document.getElementById('logCatch').value.trim(),
+    notes:document.getElementById('logNotes').value.trim(),
+    flagged:document.getElementById('logFlag').checked,
+  };
+  entries.unshift(entry);
+  saveJournal(entries);
+  closeLogModal();
+  // Quick confirmation
+  const btn=document.getElementById('logBtn');
+  btn.textContent='✓ Session logged!';
+  setTimeout(()=>btn.textContent='📓 Log this session',2500);
+}
+
+function renderJournal(){
+  const entries=loadJournal();
+  const el=document.getElementById('journalList');
+  if(!entries.length){
+    el.innerHTML='<div class="j-empty">No sessions logged yet.<br><br>Go to the Planner, pick a date and location,<br>then tap <strong>Log this session</strong> after fishing.</div>';
+    return;
+  }
+  el.innerHTML=entries.map(e=>{
+    const stars='⭐'.repeat(e.rating)+'☆'.repeat(5-e.rating);
+    const flag=e.flagged?'<span style="color:#f5c542">🚩 Flagged</span> · ':'';
+    return `<div class="j-entry${e.flagged?' flagged':''}" onclick="openDetail(${e.id})">
+      <div class="je-top">
+        <div><div class="je-loc">${e.location}${e.flagged?' 🚩':''}</div><div class="je-date">${new Date(e.date+'T12:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'long',year:'numeric'})}</div></div>
+        <div class="je-stars">${stars}</div>
+      </div>
+      <div class="je-conds">🌊 Coefficient ${e.coeff} · 🌙 ${e.moonPhase}</div>
+      ${e.caught?`<div class="je-note">🐟 ${e.caught}${e.notes?' — '+e.notes.slice(0,80)+(e.notes.length>80?'…':''):''}</div>`:''}
+      ${!e.caught&&e.notes?`<div class="je-note">${e.notes.slice(0,100)}${e.notes.length>100?'…':''}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function openDetail(id){
+  const entries=loadJournal();
+  const e=entries.find(x=>x.id===id);
+  if(!e) return;
+  editingId=id;
+  document.getElementById('detailTitle').textContent=e.location+' · '+'⭐'.repeat(e.rating);
+  const dateStr=new Date(e.date+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('detailBody').innerHTML=`
+    <div class="detail-sec">
+      <div class="detail-sec-lbl">Date</div>
+      <div style="font-size:14px">${dateStr}${e.flagged?' <span style="color:#f5c542">🚩 Flagged as good session</span>':''}</div>
+    </div>
+    ${e.caught?`<div class="detail-sec"><div class="detail-sec-lbl">Catch</div><div style="font-size:14px">🐟 ${e.caught}</div></div>`:''}
+    ${e.notes?`<div class="detail-sec"><div class="detail-sec-lbl">Notes</div><div style="font-size:14px;line-height:1.6">${e.notes}</div></div>`:''}
+    <div class="detail-sec">
+      <div class="detail-sec-lbl">Conditions</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.9">
+        🌊 Tidal coefficient: ${e.coeff}<br>
+        🌙 ${e.moonPhase}<br>
+        📍 ${e.location}
+      </div>
+    </div>`;
+  document.getElementById('detailModal').classList.add('show');
+}
+
+function closeDetail(){
+  document.getElementById('detailModal').classList.remove('show');
+  editingId=null;
+}
+
+function deleteEntry(){
+  if(!editingId) return;
+  if(!confirm('Delete this journal entry?')) return;
+  const entries=loadJournal().filter(e=>e.id!==editingId);
+  saveJournal(entries);
+  closeDetail();
+  renderJournal();
+}
 </script>
 </body>
 </html>
