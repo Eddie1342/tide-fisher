@@ -599,6 +599,34 @@ const PORTS=[
   {name:"Ayr",id:"sw011",lat:55.462,lng:-4.629},
   {name:"Girvan",id:"sw012",lat:55.234,lng:-4.863},
   {name:"Ballantrae",id:"sw013",lat:55.098,lng:-4.984},
+  // ── West Highlands & Argyll fishing spots ─────────────────────────────────
+  {name:"Fort William",id:"hw001",lat:56.820,lng:-5.115},
+  {name:"Corpach",id:"hw002",lat:56.835,lng:-5.146},
+  {name:"Onich",id:"hw003",lat:56.714,lng:-5.218},
+  {name:"Ballachulish",id:"hw004",lat:56.682,lng:-5.182},
+  {name:"Corran Ferry",id:"hw005",lat:56.720,lng:-5.248},
+  {name:"Ardgour",id:"hw006",lat:56.726,lng:-5.254},
+  {name:"Connel",id:"hw007",lat:56.461,lng:-5.387},
+  {name:"Appin",id:"hw008",lat:56.551,lng:-5.404},
+  {name:"Lismore Island",id:"hw009",lat:56.535,lng:-5.490},
+  {name:"Craignure (Mull)",id:"hw010",lat:56.469,lng:-5.703},
+  {name:"Lochaline",id:"hw011",lat:56.537,lng:-5.776},
+  {name:"Tobermory",id:"hw012",lat:56.623,lng:-6.068},
+  {name:"Salen (Mull)",id:"hw013",lat:56.514,lng:-5.929},
+  {name:"Kilchoan",id:"hw014",lat:56.696,lng:-6.089},
+  {name:"Strontian",id:"hw015",lat:56.681,lng:-5.568},
+  {name:"Salen (Loch Sunart)",id:"hw016",lat:56.700,lng:-5.773},
+  {name:"Tarbert (Loch Fyne)",id:"hw017",lat:55.867,lng:-5.404},
+  {name:"Inveraray",id:"hw018",lat:56.230,lng:-5.077},
+  {name:"Lochgilphead",id:"hw019",lat:56.036,lng:-5.441},
+  {name:"Campbeltown",id:"hw020",lat:55.421,lng:-5.598},
+  {name:"Carradale",id:"hw021",lat:55.589,lng:-5.473},
+  {name:"Skipness",id:"hw022",lat:55.767,lng:-5.357},
+  {name:"Port Ellen (Islay)",id:"hw023",lat:55.629,lng:-6.190},
+  {name:"Port Askaig (Islay)",id:"hw024",lat:55.849,lng:-6.103},
+  {name:"Bowmore (Islay)",id:"hw025",lat:55.763,lng:-6.285},
+  {name:"Craighouse (Jura)",id:"hw026",lat:55.832,lng:-5.950},
+  {name:"Scalasaig (Colonsay)",id:"hw027",lat:56.072,lng:-6.186},
 ].sort((a,b)=>a.name.localeCompare(b.name));
 
 // Legacy simple-model fallback data (used when harmonic data unavailable)
@@ -648,6 +676,34 @@ const PORT_DATA={
   "sw011":{mhws:3.0,mlws:0.3,phase:3.8,amp:1.45}, // Ayr
   "sw012":{mhws:2.9,mlws:0.3,phase:4.0,amp:1.42}, // Girvan
   "sw013":{mhws:3.0,mlws:0.3,phase:4.1,amp:1.45}, // Ballantrae
+  // West Highlands & Argyll
+  "hw001":{mhws:4.3,mlws:0.5,phase:2.1,amp:2.00}, // Fort William
+  "hw002":{mhws:4.3,mlws:0.5,phase:2.1,amp:2.00}, // Corpach
+  "hw003":{mhws:4.0,mlws:0.5,phase:1.8,amp:1.95}, // Onich
+  "hw004":{mhws:3.9,mlws:0.5,phase:1.7,amp:1.90}, // Ballachulish
+  "hw005":{mhws:3.9,mlws:0.5,phase:1.7,amp:1.90}, // Corran Ferry
+  "hw006":{mhws:3.9,mlws:0.5,phase:1.7,amp:1.90}, // Ardgour
+  "hw007":{mhws:3.5,mlws:0.5,phase:1.5,amp:1.75}, // Connel
+  "hw008":{mhws:4.0,mlws:0.5,phase:1.5,amp:1.95}, // Appin
+  "hw009":{mhws:4.0,mlws:0.5,phase:1.5,amp:1.95}, // Lismore Island
+  "hw010":{mhws:4.1,mlws:0.5,phase:1.5,amp:2.00}, // Craignure
+  "hw011":{mhws:4.1,mlws:0.5,phase:1.5,amp:2.00}, // Lochaline
+  "hw012":{mhws:4.1,mlws:0.5,phase:1.5,amp:2.00}, // Tobermory
+  "hw013":{mhws:4.1,mlws:0.5,phase:1.5,amp:2.00}, // Salen (Mull)
+  "hw014":{mhws:4.1,mlws:0.5,phase:1.4,amp:2.00}, // Kilchoan
+  "hw015":{mhws:4.0,mlws:0.5,phase:1.6,amp:1.95}, // Strontian
+  "hw016":{mhws:4.0,mlws:0.5,phase:1.5,amp:1.95}, // Salen (Loch Sunart)
+  "hw017":{mhws:3.6,mlws:0.4,phase:1.4,amp:1.70}, // Tarbert (Loch Fyne)
+  "hw018":{mhws:3.4,mlws:0.4,phase:1.4,amp:1.60}, // Inveraray
+  "hw019":{mhws:3.3,mlws:0.4,phase:1.4,amp:1.55}, // Lochgilphead
+  "hw020":{mhws:3.0,mlws:0.4,phase:1.4,amp:1.45}, // Campbeltown
+  "hw021":{mhws:3.2,mlws:0.4,phase:1.4,amp:1.55}, // Carradale
+  "hw022":{mhws:3.4,mlws:0.4,phase:1.4,amp:1.65}, // Skipness
+  "hw023":{mhws:1.6,mlws:0.2,phase:2.5,amp:0.80}, // Port Ellen (Islay)
+  "hw024":{mhws:1.6,mlws:0.2,phase:2.4,amp:0.80}, // Port Askaig (Islay)
+  "hw025":{mhws:1.5,mlws:0.2,phase:2.5,amp:0.75}, // Bowmore (Islay)
+  "hw026":{mhws:1.7,mlws:0.2,phase:2.3,amp:0.85}, // Craighouse (Jura)
+  "hw027":{mhws:1.4,mlws:0.2,phase:2.5,amp:0.70}, // Scalasaig (Colonsay)
   "default":{mhws:5.0,mlws:0.6,phase:1.0,amp:2.3},
 };
 
@@ -745,6 +801,31 @@ const TICON_MAP={
   "sw011":{file:"millport-mil-gbr-cmems",           z0:0.40},  // Ayr (Firth of Clyde)
   "sw012":{file:"millport-mil-gbr-cmems",           z0:0.35},  // Girvan (Firth of Clyde)
   "sw013":{file:"portpatrick-por-gbr-cmems",        z0:0.28},  // Ballantrae
+  // ── West Highlands & Argyll (Tobermory proxy — Sound of Mull/Loch Linnhe regime) ──
+  "0762":{file:"tobermory-tob-gbr-cmems",           z0:2.10},  // Oban
+  "hw001":{file:"tobermory-tob-gbr-cmems",          z0:2.20},  // Fort William
+  "hw002":{file:"tobermory-tob-gbr-cmems",          z0:2.20},  // Corpach
+  "hw003":{file:"tobermory-tob-gbr-cmems",          z0:2.10},  // Onich
+  "hw004":{file:"tobermory-tob-gbr-cmems",          z0:2.05},  // Ballachulish
+  "hw005":{file:"tobermory-tob-gbr-cmems",          z0:2.05},  // Corran Ferry
+  "hw006":{file:"tobermory-tob-gbr-cmems",          z0:2.05},  // Ardgour
+  "hw007":{file:"tobermory-tob-gbr-cmems",          z0:1.90},  // Connel (Loch Etive entrance)
+  "hw008":{file:"tobermory-tob-gbr-cmems",          z0:2.10},  // Appin
+  "hw009":{file:"tobermory-tob-gbr-cmems",          z0:2.10},  // Lismore Island
+  "hw010":{file:"tobermory-tob-gbr-cmems",          z0:2.10},  // Craignure (Mull)
+  "hw011":{file:"tobermory-tob-gbr-cmems",          z0:2.10},  // Lochaline
+  "hw012":{file:"tobermory-tob-gbr-cmems",          z0:2.10},  // Tobermory
+  "hw013":{file:"tobermory-tob-gbr-cmems",          z0:2.10},  // Salen (Mull)
+  "hw014":{file:"tobermory-tob-gbr-cmems",          z0:2.10},  // Kilchoan
+  "hw015":{file:"tobermory-tob-gbr-cmems",          z0:2.10},  // Strontian
+  "hw016":{file:"tobermory-tob-gbr-cmems",          z0:2.10},  // Salen (Loch Sunart)
+  "hw017":{file:"tobermory-tob-gbr-cmems",          z0:1.90},  // Tarbert (Loch Fyne)
+  "hw018":{file:"tobermory-tob-gbr-cmems",          z0:1.80},  // Inveraray
+  "hw019":{file:"tobermory-tob-gbr-cmems",          z0:1.75},  // Lochgilphead
+  "hw020":{file:"tobermory-tob-gbr-cmems",          z0:1.70},  // Campbeltown
+  "hw021":{file:"tobermory-tob-gbr-cmems",          z0:1.80},  // Carradale
+  "hw022":{file:"tobermory-tob-gbr-cmems",          z0:1.85},  // Skipness
+  // Islay/Jura/Colonsay: Atlantic regime, no suitable TICON proxy — uses simple model
 };
 
 // Embedded harmonic constants (confirmed from TICON BODC/CCO data, CC-BY-4.0)
