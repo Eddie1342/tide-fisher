@@ -1305,6 +1305,8 @@ async function updateAll(){
   buildWeekStrip();
   document.getElementById('emptyState').style.display='none';
   document.getElementById('logBtn').disabled=false;
+  // Auto-check for condition matches if notifications already granted
+  if(Notification.permission==='granted') checkForMatches(true);
   document.getElementById('mainContent').style.display='block';
 
   const lat=selectedStation.lat, lng=selectedStation.lon;
@@ -1688,6 +1690,58 @@ function closeDetail(){
   editingId=null;
 }
 
+function conditionMatch(entry, conds){
+  // Returns a match score 0-100 and list of matched factors
+  if(!entry||!conds) return {score:0,factors:[]};
+  const factors=[];
+  let score=0;
+  // Tidal coefficient within ±15
+  const coeffDiff=Math.abs((entry.coeff||50)-(conds.coeff||50));
+  if(coeffDiff<=8){score+=35;factors.push('very similar tidal strength');}
+  else if(coeffDiff<=15){score+=20;factors.push('similar tidal strength');}
+  // Spring/neap match
+  if(entry.tideType&&conds.tideType&&entry.tideType===conds.tideType){score+=15;factors.push(conds.tideType+' tides');}
+  // Moon similarity (spring factor within 0.2)
+  const moonDiff=Math.abs((entry.moonSp||0)-(conds.moonSp||0));
+  if(moonDiff<=0.1){score+=25;factors.push('same moon phase');}
+  else if(moonDiff<=0.2){score+=12;factors.push('similar moon phase');}
+  // Pressure trend match
+  if(entry.pressure&&conds.pressure&&entry.pressure.trend===conds.pressure.trend){
+    score+=15;factors.push('same pressure trend ('+conds.pressure.trend.toLowerCase()+')');
+  }
+  // Wind strength similar (within 1 Beaufort)
+  if(entry.wind&&conds.wind&&Math.abs(entry.wind.bf-conds.wind.bf)<=1){
+    score+=10;factors.push('similar wind strength');
+  }
+  return {score,factors};
+}
+
+async function sendNotif(title,body){
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    await reg.showNotification(title,{body,icon:'/tide-fisher/icon-192.png',badge:'/tide-fisher/icon-192.png'});
+  }catch{
+    try{ new Notification(title,{body}); }catch(_){}
+  }
+}
+
+async function checkForMatches(silent=false){
+  if(!currentConditions) return;
+  const flagged=loadJournal().filter(e=>e.flagged);
+  if(!flagged.length) return;
+  let best=null, bestScore=0;
+  flagged.forEach(e=>{
+    const {score,factors}=conditionMatch(e,currentConditions);
+    if(score>bestScore){bestScore=score;best={entry:e,score,factors};}
+  });
+  if(!best||bestScore<50) return;
+  const mark=best.entry.mark?`${best.entry.mark}, ${best.entry.location}`:best.entry.location;
+  const stars='⭐'.repeat(best.entry.rating);
+  const body=`Conditions match your ${stars} session at ${mark} (${new Date(best.entry.date+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}).\n${best.factors.join(' · ')}`;
+  await sendNotif('🎣 Good conditions incoming!',body);
+  return best;
+}
+
 async function testNotification(){
   const status=document.getElementById('notifStatus');
   if(!('Notification' in window)){
@@ -1697,25 +1751,31 @@ async function testNotification(){
   status.textContent='Requesting permission…';
   const perm=await Notification.requestPermission();
   if(perm==='denied'){
-    status.textContent='❌ Permission denied. Enable notifications for this site in Settings → Safari → [this site] → Notifications.';
+    status.textContent='❌ Permission denied. Go to Settings → [your browser] → Notifications and allow this site.';
     return;
   }
-  if(perm!=='granted'){
-    status.textContent='❌ Permission not granted.';
+  if(perm!=='granted'){ status.textContent='❌ Permission not granted.'; return; }
+
+  const flagged=loadJournal().filter(e=>e.flagged);
+  if(!flagged.length){
+    // No flagged entries yet — send a plain test
+    await sendNotif('Tide Fisher 🎣','Notifications are working! Flag a journal entry to get condition-match alerts.');
+    status.textContent='✅ Sent — but you have no flagged entries yet. Log a session and flag it to get real alerts.';
     return;
   }
-  try{
-    const reg=await navigator.serviceWorker.ready;
-    await reg.showNotification('Tide Fisher 🎣',{
-      body:'Conditions at your flagged mark are looking good this weekend!',
-      icon:'/tide-fisher/icon-192.png',
-      badge:'/tide-fisher/icon-192.png',
-    });
-    status.textContent='✅ Notification sent — check your notification tray!';
-  }catch(e){
-    // Fallback if SW showNotification fails (some browsers)
-    new Notification('Tide Fisher 🎣',{body:'Test notification — working!'});
-    status.textContent='✅ Notification sent!';
+  if(!currentConditions){
+    await sendNotif('Tide Fisher 🎣','Notifications working! Open the Planner and search a location to enable condition matching.');
+    status.textContent='✅ Sent. Search a location on the Planner first to enable full condition matching.';
+    return;
+  }
+  // Run real match against flagged entries
+  const result=await checkForMatches();
+  if(result){
+    const mark=result.entry.mark?`${result.entry.mark}, ${result.entry.location}`:result.entry.location;
+    status.textContent=`✅ Match found! Notified you about ${mark} (${result.score}% match — ${result.factors.join(', ')})`;
+  } else {
+    await sendNotif('Tide Fisher 🎣',`Conditions checked — no close matches with your ${flagged.length} flagged session(s) right now.`);
+    status.textContent=`✅ Sent — no strong match with today's conditions yet (${flagged.length} flagged session${flagged.length>1?'s':''} checked).`;
   }
 }
 
