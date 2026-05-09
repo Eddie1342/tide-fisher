@@ -1359,6 +1359,28 @@ async function updateAll(){
   document.getElementById('rOverall').style.background=overall>=70?'#2ecc8a':overall>=48?'#f5c542':'#e05252';
   setRating('rTide',tidalScore); setRating('rMoon',moonScore); setRating('rLight',lightScore); setRating('rPressure',pressureScore);
 
+  // Store full snapshot for journal logging
+  currentConditions={
+    date: currentDate.toISOString().split('T')[0],
+    location: selectedStation.name,
+    lat: selectedStation.lat,
+    lon: selectedStation.lon,
+    coeff: Math.round(20+lunar.sp*100),
+    moonPhase: lunar.phase,
+    moonSp: +lunar.sp.toFixed(2),
+    tideType: lunar.isSpring?'Spring':'Neap',
+    tidalRange: tidalRangeNum>0?+tidalRangeNum.toFixed(1):null,
+    tides: tides.map(t=>({type:t.type,time:minsToTime(t.minutes),height:t.height})),
+    scores: {overall,tides:tidalScore,moon:moonScore,pressure:pressureScore},
+    wind: apiData?{mph:Math.round(apiData.windMph),dir:apiData.windDir!=null?toCompass(apiData.windDir):null,gustMph:apiData.gustMph!=null?Math.round(apiData.gustMph):null,bf:toBeaufort(apiData.windMph)}:null,
+    temp: apiData?{max:apiData.tempMax!=null?Math.round(apiData.tempMax):null,min:apiData.tempMin!=null?Math.round(apiData.tempMin):null}:null,
+    pressure: apiData?{hpa:apiData.pressure!=null?Math.round(apiData.pressure):null,trend:pressureTrendLabel(apiData.pressureAm,apiData.pressurePm).txt}:null,
+    rain: apiData?apiData.rainProb:null,
+    sunrise: sun?minsToTime(sun.rise):null,
+    sunset: sun?minsToTime(sun.set):null,
+    topBite: bites.length?minsToTime(bites[0].minutes):null,
+  };
+
   // Bite windows
   document.getElementById('biteGrid').innerHTML=bites.map((b,i)=>`
     <div class="bite-card${i===0?' top':''}">
@@ -1519,8 +1541,9 @@ document.head.appendChild(st);
 
 // ── Journal ────────────────────────────────────────────────────────────────────
 let journalStar=0;
-let journalSnapshot=null; // conditions captured when modal opens
-let editingId=null;       // for delete
+let journalSnapshot=null;
+let editingId=null;
+let currentConditions=null; // populated by updateAll()
 
 function switchTab(tab){
   const isJournal=tab==='journal';
@@ -1544,37 +1567,29 @@ function setStar(n){
 }
 
 function openLogModal(){
-  if(!selectedStation) return;
+  if(!currentConditions) return;
   journalStar=0;
   document.querySelectorAll('.star-btn').forEach(b=>b.classList.remove('on'));
   document.getElementById('logCatch').value='';
   document.getElementById('logNotes').value='';
   document.getElementById('logFlag').checked=false;
+  journalSnapshot={...currentConditions};
 
-  // Snapshot current conditions
-  const dateStr=currentDate.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
-  const coeff=Math.round(20+lunarData(currentDate).sp*100);
-  const lunar=lunarData(currentDate);
-  journalSnapshot={
-    date:currentDate.toISOString().split('T')[0],
-    location:selectedStation.name,
-    lat:selectedStation.lat,
-    lon:selectedStation.lon,
-    coeff,
-    moonPhase:lunar.phase,
-    moonSp:+lunar.sp.toFixed(2),
-  };
+  const c=currentConditions;
+  const lines=[];
+  lines.push(`📍 ${c.location}`);
+  lines.push(`📅 ${new Date(c.date+'T12:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'})}`);
+  lines.push(`🌊 ${c.tideType} · Coefficient ${c.coeff}${c.tidalRange?' · Range '+c.tidalRange+'m':''}`);
+  if(c.tides&&c.tides.length) lines.push(`⏱ ${c.tides.map(t=>`${t.type} ${t.time} (${t.height}m)`).join(' · ')}`);
+  lines.push(`🌙 ${c.moonPhase}`);
+  if(c.wind) lines.push(`💨 Wind F${c.wind.bf} ${c.wind.mph}mph${c.wind.dir?' '+c.wind.dir:''}${c.wind.gustMph?' · Gusts '+c.wind.gustMph+'mph':''}`);
+  if(c.temp&&c.temp.max!=null) lines.push(`🌡 ${c.temp.max}°C / ${c.temp.min}°C`);
+  if(c.pressure&&c.pressure.hpa) lines.push(`📊 ${c.pressure.hpa} hPa · ${c.pressure.trend}`);
+  if(c.rain!=null) lines.push(`🌧 Rain chance: ${c.rain}%`);
+  if(c.scores) lines.push(`⭐ App score: ${c.scores.overall}%`);
+  if(c.topBite) lines.push(`🎯 Top bite window: ${c.topBite}`);
 
-  // Build conditions summary text
-  let conds=`📍 ${selectedStation.name} · ${dateStr}\n`;
-  conds+=`🌊 Tidal coefficient: ${coeff}\n`;
-  conds+=`🌙 ${lunar.phase}\n`;
-  const ap=document.getElementById('rOverallV').textContent;
-  if(ap&&ap!=='—') conds+=`⭐ App score: ${ap}\n`;
-  const wx=document.getElementById('wxGrid').textContent.trim();
-  if(wx) conds+=`🌤 Weather on file`;
-
-  document.getElementById('logCondsSummary').textContent=conds;
+  document.getElementById('logCondsSummary').textContent=lines.join('\n');
   document.getElementById('logModal').classList.add('show');
 }
 
@@ -1640,10 +1655,16 @@ function openDetail(id){
     ${e.notes?`<div class="detail-sec"><div class="detail-sec-lbl">Notes</div><div style="font-size:14px;line-height:1.6">${e.notes}</div></div>`:''}
     <div class="detail-sec">
       <div class="detail-sec-lbl">Conditions</div>
-      <div style="font-size:13px;color:var(--text2);line-height:1.9">
-        🌊 Tidal coefficient: ${e.coeff}<br>
+      <div style="font-size:13px;color:var(--text2);line-height:2">
+        🌊 ${e.tideType||''} · Coefficient ${e.coeff}${e.tidalRange?' · Range '+e.tidalRange+'m':''}<br>
+        ${e.tides&&e.tides.length?e.tides.map(t=>`${t.type==='HW'?'▲':'▼'} ${t.type} ${t.time} <span style="color:var(--text3)">${t.height}m</span>`).join('&nbsp;&nbsp;')+'<br>':''}
         🌙 ${e.moonPhase}<br>
-        📍 ${e.location}
+        ${e.wind?`💨 F${e.wind.bf} · ${e.wind.mph} mph${e.wind.dir?' '+e.wind.dir:''}${e.wind.gustMph?' · Gusts '+e.wind.gustMph+' mph':''}<br>`:''}
+        ${e.temp&&e.temp.max!=null?`🌡 ${e.temp.max}°C / ${e.temp.min}°C<br>`:''}
+        ${e.pressure&&e.pressure.hpa?`📊 ${e.pressure.hpa} hPa · ${e.pressure.trend}<br>`:''}
+        ${e.rain!=null?`🌧 Rain chance: ${e.rain}%<br>`:''}
+        ${e.scores?`⭐ App score: ${e.scores.overall}% (Tides ${e.scores.tides}% · Moon ${e.scores.moon}%)<br>`:''}
+        ${e.topBite?`🎯 Top bite: ${e.topBite}`:''}
       </div>
     </div>`;
   document.getElementById('detailModal').classList.add('show');
