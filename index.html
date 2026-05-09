@@ -834,7 +834,7 @@ async function fetchWTExtremes(lat,lon,date){
 }
 
 async function fetchWTHeights(lat,lon,date){
-  const dateStr=date.toISOString().split('T')[0];
+  const dateStr=localDateStr(date);
   const ck=`wt_hts_${lat.toFixed(2)}_${lon.toFixed(2)}_${dateStr}`;
   const hit=localStorage.getItem(ck);
   if(hit) return JSON.parse(hit);
@@ -973,6 +973,7 @@ let userLat=null,userLon=null; // set by geolocation
 initSearch();
 
 let currentDate=new Date(); currentDate.setHours(0,0,0,0);
+function localDateStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 
 function haversine(a,b,c,d){const R=6371,dL=(c-a)*Math.PI/180,dG=(d-b)*Math.PI/180,e=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dG/2)**2;return R*2*Math.atan2(Math.sqrt(e),Math.sqrt(1-e));}
 function nearestPort(lat,lng){let best=null,bd=Infinity;PORTS.forEach(p=>{const d=haversine(lat,lng,p.lat,p.lng);if(d<bd){bd=d;best={...p,dist:d};}});return best;}
@@ -1017,7 +1018,7 @@ function jumpToDate(val){ if(!val) return; const [y,m,d]=val.split('-').map(Numb
 
 // Open-Meteo caching & fetching
 function getCacheKey(lat, lng, date) {
-  return `tm3_${lat.toFixed(3)}_${lng.toFixed(3)}_${date.toISOString().split('T')[0]}`;
+  return `tm3_${lat.toFixed(3)}_${lng.toFixed(3)}_${localDateStr(date)}`;
 }
 
 async function fetchOpenMeteoData(lat, lng, date) {
@@ -1026,7 +1027,7 @@ async function fetchOpenMeteoData(lat, lng, date) {
   if (cached) return JSON.parse(cached);
 
   try {
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = localDateStr(date);
     const daily = 'sunrise,sunset,weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max,wind_direction_10m_dominant,wind_gusts_10m_max,precipitation_probability_max,precipitation_sum';
     const hourly = 'surface_pressure,relative_humidity_2m';
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=${daily}&hourly=${hourly}&wind_speed_unit=mph&timezone=auto&start_date=${dateStr}&end_date=${dateStr}`;
@@ -1301,7 +1302,7 @@ function buildWeekStrip(){
 async function updateAll(){
   if(!selectedStation) return;
   document.getElementById('dateLabel').textContent=fmt(currentDate);
-  document.getElementById('datePicker').value=currentDate.toISOString().split('T')[0];
+  document.getElementById('datePicker').value=localDateStr(currentDate);
   buildWeekStrip();
   document.getElementById('emptyState').style.display='none';
   document.getElementById('logBtn').disabled=false;
@@ -1373,7 +1374,7 @@ async function updateAll(){
 
   // Store full snapshot for journal logging
   currentConditions={
-    date: currentDate.toISOString().split('T')[0],
+    date: localDateStr(currentDate),
     location: selectedStation.name,
     lat: selectedStation.lat,
     lon: selectedStation.lon,
@@ -1764,8 +1765,12 @@ async function testNotification(){
     return;
   }
   if(!currentConditions){
-    await sendNotif('Tide Fisher 🎣','Notifications working! Open the Planner and search a location to enable condition matching.');
-    status.textContent='✅ Sent. Search a location on the Planner first to enable full condition matching.';
+    // No planner loaded — fire a notification previewing the most recent flagged entry
+    const newest=flagged[flagged.length-1];
+    const mark=newest.mark?`${newest.mark}, ${newest.location}`:newest.location;
+    const stars='⭐'.repeat(newest.rating);
+    await sendNotif('🎣 Tide Fisher — notifications active!',`You have a ${stars} flagged session at ${mark}. Open the Planner and search that location to start getting condition-match alerts.`);
+    status.textContent=`✅ Notifications working! Found ${flagged.length} flagged session(s). Load the Planner for full condition matching.`;
     return;
   }
   // Run real match against flagged entries
@@ -1774,7 +1779,7 @@ async function testNotification(){
     const mark=result.entry.mark?`${result.entry.mark}, ${result.entry.location}`:result.entry.location;
     status.textContent=`✅ Match found! Notified you about ${mark} (${result.score}% match — ${result.factors.join(', ')})`;
   } else {
-    await sendNotif('Tide Fisher 🎣',`Conditions checked — no close matches with your ${flagged.length} flagged session(s) right now.`);
+    await sendNotif('Tide Fisher 🎣',`Conditions checked for ${currentConditions.location} — no close matches with your ${flagged.length} flagged session(s) right now.`);
     status.textContent=`✅ Sent — no strong match with today's conditions yet (${flagged.length} flagged session${flagged.length>1?'s':''} checked).`;
   }
 }
