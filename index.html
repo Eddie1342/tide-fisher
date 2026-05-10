@@ -1391,7 +1391,7 @@ let userLat=null,userLon=null; // set by geolocation
 ['sw001','sw002','sw003','sw004','sw005','sw006','sw011','sw012','sw013']
   .forEach(id=>localStorage.removeItem('ticon_'+id));
 
-initSearch();
+initSearch().then(()=>autoCheckFavourites());
 
 let currentDate=new Date(); currentDate.setHours(0,0,0,0);
 function localDateStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -2177,6 +2177,55 @@ async function sendNotif(title,body){
   }catch{
     try{ new Notification(title,{body}); }catch(_){}
   }
+}
+
+async function autoCheckFavourites(){
+  if(Notification.permission!=='granted') return;
+  const flagged=loadJournal().filter(e=>e.flagged);
+  if(!flagged.length) return;
+  const favs=getFavourites();
+  if(!favs.length) return;
+
+  // Run at most once per day
+  const today=localDateStr(new Date());
+  if(localStorage.getItem('tf_lastAutoCheck')===today) return;
+  localStorage.setItem('tf_lastAutoCheck',today);
+
+  const date=new Date(); date.setHours(0,0,0,0);
+  const matches=[];
+
+  for(const fav of favs){
+    try{
+      const tides=await getTides(fav.lat,fav.lon,date);
+      if(!tides||!tides.length) continue;
+      const lunar=lunarData(date);
+      const hwH=tides.filter(t=>t.type==='HW').map(t=>t.height);
+      const lwH=tides.filter(t=>t.type==='LW').map(t=>t.height);
+      const tidalRange=hwH.length&&lwH.length?+(Math.max(...hwH)-Math.min(...lwH)).toFixed(1):0;
+      const conds={
+        date:today, location:fav.name, lat:fav.lat, lon:fav.lon,
+        coeff:Math.round(50+60*lunar.sp),
+        moonPhase:lunar.phase, moonSp:lunar.sp,
+        tideType:lunar.isSpring?'Spring':'Neap',
+        tidalRange, tides:tides.map(t=>({type:t.type,time:minsToTime(t.minutes),height:t.height})),
+        wind:null, pressure:null,
+      };
+      flagged.forEach(entry=>{
+        const {score,factors}=conditionMatch(entry,conds);
+        if(score>=50) matches.push({entry,score,factors,favName:fav.name});
+      });
+    }catch(_){}
+  }
+
+  if(!matches.length) return;
+  matches.sort((a,b)=>b.score-a.score);
+  const best=matches[0];
+  const mark=best.entry.mark?`${best.entry.mark}, ${best.entry.location}`:best.entry.location;
+  const stars='⭐'.repeat(best.entry.rating);
+  const body=matches.length>1
+    ?`${matches.length} of your favourite spots have matching conditions today. Best match: ${stars} at ${mark}.\n${best.factors.join(' · ')}`
+    :`Conditions at ${best.favName} match your ${stars} session at ${mark}.\n${best.factors.join(' · ')}`;
+  await sendNotif('🎣 Good conditions at your favourites!',body);
 }
 
 async function checkForMatches(silent=false){
