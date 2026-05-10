@@ -149,7 +149,8 @@ body { padding-top: var(--safe-top); padding-bottom: var(--safe-bot); }
 .wday.active .wdn { color: #7ab8f5; }
 .wday .wdd { font-size: 16px; font-weight: 500; color: var(--text); }
 .wday.active .wdd { color: #b5d4f4; }
-.wday .wdq { font-size: 10px; margin-top: 1px; }
+.wday .wdq { font-size: 11px; font-weight: 600; margin-top: 1px; }
+.wday.best-day { border-color: #2ecc8a; }
 
 /* MAIN CONTENT */
 #mainContent { display: none; }
@@ -1700,23 +1701,54 @@ function solunar(lat,lng,date,tides){
   return wins.sort((a,b)=>b.score-a.score);
 }
 
-function quickScore(portId,date){
+function quickScore(date){
   const l=lunarData(date);
-  return Math.round(l.sp*50+50*(0.5+0.5*Math.cos(l.frac*2*Math.PI)));
+  const moonScore=Math.round(l.sp*100);
+  // Tidal estimate from spring/neap factor (no API needed)
+  const estCoeff=50+60*l.sp;
+  const springPts=estCoeff>=85?40:estCoeff>=65?25:estCoeff>=45?15:10;
+  const tidalEst=Math.min(98,springPts+20);
+  // Light score from station lat/lon if loaded
+  let lightScore=55;
+  if(selectedStation){
+    const sun=sunTimes(selectedStation.lat,selectedStation.lon,date);
+    if(sun){
+      const dayLen=sun.set-sun.rise;
+      lightScore=Math.max(20,Math.min(75,Math.round((dayLen/960)*75))+Math.min(25,Math.round(((960-dayLen)/960)*25)));
+    }
+  }
+  return Math.round(moonScore*0.30+tidalEst*0.38+lightScore*0.12+58*0.20);
 }
+
+function scoreCol(s){ return s>=72?'#2ecc8a':s>=48?'#f5c542':'#e05252'; }
 
 function buildWeekStrip(){
   const strip=document.getElementById('weekStrip'); strip.innerHTML='';
+  // Compute scores for all days; find best upcoming day (i >= 0)
+  const days=[];
   for(let i=-2;i<=12;i++){
     const d=new Date(currentDate); d.setDate(d.getDate()+i);
-    const s=quickScore(null,d);
-    const dot=s>=72?'🟢':s>=48?'🟡':'🔴';
-    const div=document.createElement('div');
-    div.className='wday'+(i===0?' active':'');
-    div.innerHTML=`<span class="wdn">${d.toLocaleDateString('en-GB',{weekday:'short'})}</span><span class="wdd">${d.getDate()}</span><span class="wdq">${dot}</span>`;
-    const cap=new Date(d); div.onclick=()=>{currentDate=cap;updateAll().catch(e=>console.error('Update failed:', e));};
-    strip.appendChild(div);
+    days.push({i,d,s:quickScore(d)});
   }
+  const bestDay=days.filter(x=>x.i>0).reduce((a,b)=>b.s>a.s?b:a,days.find(x=>x.i>0)||days[2]);
+  days.forEach(({i,d,s})=>{
+    const isBest=bestDay&&i===bestDay.i;
+    const div=document.createElement('div');
+    div.className='wday'+(i===0?' active':'')+(isBest?' best-day':'');
+    div.dataset.stripOffset=i;
+    div.innerHTML=`<span class="wdn">${d.toLocaleDateString('en-GB',{weekday:'short'})}</span>`+
+      `<span class="wdd">${d.getDate()}</span>`+
+      `<span class="wdq" style="color:${scoreCol(s)}">${s}</span>`;
+    const cap=new Date(d); div.onclick=()=>{currentDate=cap;updateAll().catch(e=>console.error('Update failed:',e));};
+    strip.appendChild(div);
+  });
+}
+
+function updateStripTile(realScore){
+  const tile=document.querySelector('#weekStrip .wday[data-strip-offset="0"]');
+  if(!tile) return;
+  const el=tile.querySelector('.wdq');
+  if(el){ el.textContent=realScore; el.style.color=scoreCol(realScore); }
 }
 
 async function updateAll(){
@@ -1779,6 +1811,7 @@ async function updateAll(){
 
   // Moon 30%, Tides 38%, Light 12%, Pressure 20%
   const overall=Math.round(moonScore*0.30+tidalScore*0.38+lightScore*0.12+pressureScore*0.20);
+  updateStripTile(overall);
 
   // Overall banner
   const grade=overall>=80?'Excellent session':overall>=65?'Good session':overall>=48?'Fair conditions':'Tough day';
